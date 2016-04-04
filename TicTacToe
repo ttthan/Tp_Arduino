@@ -1,0 +1,366 @@
+// Global Variables
+int Gameboard[]= {0,0,0,0,0,0,0,0,0};
+int Scoreboard[] = {0,0,0,0,0,0,0,0,0}; 
+int rounds; 
+int games;
+// the setup routine runs once when you press reset:
+void setup() 
+{
+  // initialize the digital pins as an output.
+  int x;
+  for (x =1 ; x < 19 ; x ++)
+  {
+    	pinMode(x, OUTPUT);
+      	digitalWrite(x, LOW);
+  }
+
+  pinMode(0, INPUT_PULLUP);
+  
+}
+
+
+
+// the loop routine runs over and over again forever:
+
+//*************************************************************
+void loop() 
+  
+{
+  
+  int Color;
+  int x;
+  int Winner=11;
+  int BlinkLastLed(int);
+  void ShowVictory(int);
+  void ClearGame();
+  void Tie();
+  
+  
+
+  
+for (games = 1; games < 6; games ++)  // let's do 5 games
+ {
+
+ 
+ Color = DecideBeginColor(); // decide which color starts
+ ClearGame();
+for (rounds = 1 ; rounds < 10 ; rounds ++)  //lets do a maximum of nine rounds per game
+   {
+     if (rounds==9) {x=BlinkLastLed(Color);} // special treatment for last led... blinking!
+     else { x = ChoosePin(Color);}            // but normally: choose a space on the board
+  
+  ShowPinChosen(x, Color);                // show which space is chosen
+  Winner = CheckforVictory();
+  if (Winner != 0){ShowVictory(Winner);break;}   // if there is victory, celebrate!
+  else {Color = ChangeColor(Color);} 
+  
+  if (rounds==9) {Tie();break;}  // if they 9th position is taken, and no one won... it's a tie!
+  
+   }  
+}  
+}  
+  
+//*************************************************************
+
+ void ClearGame()
+ {
+ int counter;
+ for (counter =0;counter<9;counter++)  
+         {
+    Gameboard[counter]=0;  
+    Scoreboard[counter]=0;
+    ShowGameboard();
+         }
+   
+  return;
+ }
+
+
+void Tie()
+{
+  int counter;
+  int round;
+  int color=10;
+
+  
+  for (round =0;round<5;round++)
+  {
+  for (counter =0;counter<9;counter+=2)  //light half of them green
+         {
+    Gameboard[counter]=color; 
+         }
+    
+  color = ChangeColor(color);
+  
+    for (counter =1;counter<9;counter+=2)  // light half of them blue
+         {
+  Gameboard[counter]=color; 
+          }
+    
+    Gameboard[4]=0;                // empty middle
+    ShowGameboard();
+    delay(1000);
+  
+
+  }
+  
+    return;
+        
+}
+
+
+int DecideBeginColor()
+{
+ int Color=10;
+ int counter;
+ int ReactionInterval=252;
+ int EndTime;
+ int Now = millis();
+ 
+
+if  (Color % 2 == 0) Color=1;
+  
+ while (0==0) // this will always be the case. 
+  { 
+  for (counter =0;counter<9;counter++)      
+      {
+    Gameboard[counter]=Color; // turn the whole board into one color
+      } 
+  ShowGameboard();
+
+    if (UserInput(ReactionInterval)==1){delay(500); return Color;}  //wait for reaction and return
+  
+  if (ReactionInterval>100) ReactionInterval = (ReactionInterval -50);  // no reaction? shorten the interval
+  Color=ChangeColor(Color);
+ 
+  }
+}
+
+int ChangeColor(int Color)
+{
+   if (Color == 1) Color =10;
+  else Color = 1; 
+  return Color;
+}
+
+
+
+int ChoosePin(int Color)
+{
+  int x=0;
+  int counter=0;
+  int EndTime;
+  int Now = millis();
+  int ReactionInterval = 200;
+  int UserInput(int);
+  randomSeed(millis());
+  if (games == 2)ReactionInterval = 75;  // add speed to game                     **** *** ** *
+  if (games == 5)ReactionInterval = 60;
+ 
+while (0==0)                                        // do this forever:
+ {        if (x ==9) x=0;                           // when at the end, check first space on the board
+  if (games == 3 || games ==5) {x= random (0,9);}  // add randomness in game                 ***** *** ** *
+  		if (Scoreboard[x]!=0) {x=x+1;continue;}   // continue if space on the board is taken
+  		   
+  		  Gameboard[x]=Color;						// show LED on gameboard 
+          ShowGameboard();
+
+     
+  if (UserInput(ReactionInterval)==1) {return x;} // on user input, return from the nested loop      
+  
+      
+  Gameboard[x]=0;  //  else turn off LED
+      x = x + 1;       // go to next space on the board
+   
+     
+     
+ }   
+  
+}  
+ 
+
+void ShowPinChosen(int x, int Color)
+ {
+  int counter = 0;
+  for (counter =0;counter<9;counter++)  // show what pin is chosen
+         {
+    if (Color == 10) {Gameboard[counter]=1;}  //change all pins to opposite color
+    else if (Color == 1) {Gameboard[counter]=10;}
+         }
+  
+  Scoreboard[x]=Color;                       
+  Gameboard[x]=Color;                       //except for the pin that is chosen
+  ShowGameboard();
+  delay(1000);
+  for (counter =0;counter<9;counter++)      // put the pins back in original colors
+      {
+    Gameboard[counter]=Scoreboard[counter]; 
+
+      }
+  ShowGameboard();
+  delay(1000); // show the user what has happened
+  
+ 
+ if (games == 4 || games ==5)   {                        //      ***** **** ***** *** 
+  
+  for (counter =0;counter<9;counter++)      // make game board disappear 
+      {
+    Gameboard[counter]=0;
+      }                         }
+  
+  return ;
+ }
+
+
+
+
+void ShowGameboard()
+
+{
+  
+ 
+int GreenPin[]= {12,10,8,6,4,2,18,17,15}; // mapping the pins to the position on the gameboard
+int BluePin[] = {13,11,9,7,5,3,1,16,14};
+
+ int x;
+ for (x =0 ; x < 9 ; x ++)
+  {
+  if (Gameboard[x] == 0) {digitalWrite((BluePin[x]), LOW) ;digitalWrite((GreenPin[x]),LOW);};  
+  if ((Gameboard[x]== 10) ) {digitalWrite((GreenPin[x]),LOW);digitalWrite((BluePin[x]), HIGH);};
+  if (Gameboard[x] == 1) {digitalWrite((BluePin[x]), LOW);digitalWrite((GreenPin[x]),HIGH);};
+                                                            
+  }
+
+}   
+                                        
+
+int CheckforVictory()
+{
+  int WhoWon = 0;
+  int counter1;
+  int counter2;
+  int test[3];
+   int combination[3];
+  void ShowRow (int, int*);
+  int WinningCombinations[8][3]=
+  {
+  {0,1,2},
+  {3,4,5},
+  {6,7,8},
+  {0,3,6},
+  {1,4,7},
+  {2,5,8},
+  {0,4,8},
+  {2,4,6}
+  };
+  
+  for (counter1 = 0 ; counter1 < 8 ; counter1 ++)
+     {
+     for (counter2 = 0; counter2 <3 ; counter2 ++)
+      {
+       WhoWon = WhoWon + Scoreboard[WinningCombinations[counter1] [counter2]];
+       combination[counter2] = WinningCombinations[counter1] [counter2];
+      }
+    if (WhoWon==30)  {ShowRow(10,combination); return 10;}
+    else if (WhoWon==3)   {ShowRow(1,combination); return 1;}
+    WhoWon = 0;
+    combination[0]=0;
+    combination[1]=0;
+    combination[2]=0;
+     }
+                                    
+  return 0;                                  
+ }
+
+
+void ShowRow(int Color, int WinningCombination[])
+{
+int i;
+int remember;
+
+ remember = Color; 
+  while (0==0)  //loop forever
+  {
+  for (i = 0 ; i < 3 ; i ++)
+       {
+   Gameboard[WinningCombination[i]]= Color;
+       }
+  ShowGameboard();
+ 
+  if (UserInput(150)==1) {return;} // return on button push
+  
+   if (Color !=0){Color=0;}
+     else {Color=remember;}
+  }  
+}  
+                                               
+                                                
+                                                
+                                                
+                                                
+                                                
+int BlinkLastLed(int Color)
+{
+  
+  int x=0;
+  int EndTime;
+  int Now = millis();
+  int ReactionInterval = 100;
+  for (x =0 ; x < 9 ; x ++)
+     {
+    if (Scoreboard[x]==0) break;         // x is the empty field
+     }
+  
+   
+  while (0==0)                      //blink forever
+     {
+
+   
+  
+  if (UserInput(ReactionInterval)==1) {Scoreboard[x]=Color; Gameboard[x]=Color; return x;}
+  
+  
+   //           }
+if (Gameboard[x]==0) {Gameboard[x]=Color;}  //  change from color to nothing
+else {Gameboard[x]=0;}   //  and vice versa
+
+     ShowGameboard();
+      
+  }
+
+}
+
+int UserInput(int ReactionInterval)
+{
+  int EndTime;
+  int Now = millis();
+  
+  EndTime = millis() + ReactionInterval;  // set time interval
+     
+   while (Now <= EndTime)                      //listen for user input in this time interval
+              {
+     
+        Now = millis ();
+     if (digitalRead(0)==LOW) {return 1;} // on user input, return from loop  with 1    
+     
+              }
+ return 0;  // no input? return 0
+}
+     
+void  ShowVictory(int Winner)
+    
+  {
+  int counter = 0;
+  for (counter =0;counter<9;counter++)  
+         {
+    {Gameboard[counter]=Winner;}  //change all pins to winner color
+ 
+         }
+  Gameboard[4]=0;  // execpt the middle one
+                        
+                     
+  ShowGameboard();
+  delay(1000);
+    
+    return;
+  }
